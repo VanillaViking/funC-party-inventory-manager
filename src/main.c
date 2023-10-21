@@ -11,6 +11,7 @@
 #include <string.h> /* strncpy, memset */
 #include <stdlib.h>
 #include "bstree.h"
+#include "database.h"
 #include "main.h"
 
 
@@ -18,45 +19,112 @@
  * Global Application State
 *******************************************************************************/
 bstree_t productTree;
-char* dbFileName = "database.pim";
 
 /*******************************************************************************
  * Main
 *******************************************************************************/
 
 int main(void){
+   char db_filename[MAX_NAME_SIZE];
+   int current_pin;
 
-   product_t test1 = {0, "jbl partybox 1000", "speaker great for family gatherings", {23,10,2023}, 4, SPEAKER, 500};
-   product_t test2 = {0, "jbl partybox 2000", "speaker great for family gatherings", {22,10,2023}, 4, SPEAKER, 500};
-   product_t test3 = {0, "jbl partybox 3000", "speaker great for family gatherings", {23,10,2024}, 4, SPEAKER, 500};
-   product_t test4 = {0, "jbl partybox 4000", "speaker great for family gatherings", {20,10,2023}, 4, SPEAKER, 500};
-   product_t test5 = {0, "jbl partybox 5000", "speaker great for family gatherings", {25,10,2023}, 4, SPEAKER, 500};
+   /* product_t test1 = {0, "jbl partybox 1000", "speaker great for family gatherings", {23,10,2023}, 4, SPEAKER, 500}; */
+   /* product_t test2 = {0, "jbl partybox 2000", "speaker great for family gatherings", {22,10,2023}, 4, SPEAKER, 500}; */
+   /* product_t test3 = {0, "jbl partybox 3000", "speaker great for family gatherings", {23,10,2024}, 4, SPEAKER, 500}; */
+   /* product_t test4 = {0, "jbl partybox 4000", "speaker great for family gatherings", {20,10,2023}, 4, SPEAKER, 500}; */
+   /* product_t test5 = {0, "jbl partybox 5000", "speaker great for family gatherings", {25,10,2023}, 4, SPEAKER, 500}; */
 
-   node_t* test_node1 = product_to_node(test1, 3);
-   node_t* test_node2 = product_to_node(test2, 4);
-   node_t* test_node3 = product_to_node(test3, 5);
-   node_t* test_node4 = product_to_node(test4, 6);
-   node_t* test_node5 = product_to_node(test5, 7);
+   /* node_t* test_node1 = product_to_node(test1, 3); */
+   /* node_t* test_node2 = product_to_node(test2, 4); */
+   /* node_t* test_node3 = product_to_node(test3, 5); */
+   /* node_t* test_node4 = product_to_node(test4, 6); */
+   /* node_t* test_node5 = product_to_node(test5, 7); */
 
-   insert_node(&productTree, test_node1);
-   insert_node(&productTree, test_node2);
-   insert_node(&productTree, test_node3);
-   insert_node(&productTree, test_node4);
-   insert_node(&productTree, test_node5);
+   /* insert_node(&productTree, test_node1); */
+   /* insert_node(&productTree, test_node2); */
+   /* insert_node(&productTree, test_node3); */
+   /* insert_node(&productTree, test_node4); */
+   /* insert_node(&productTree, test_node5); */
    
-   readFromDatabase();
-   displayInventory();
+   /* saveToDatabase(); */
+   /* displayInventory(); */
 
+   /* encryptDb(234); */
+   /* decryptDb(234); */
+   
+   /* encrypt_db("database.pim", 343); */
 
-   dbSelect();
+   dbSelect(db_filename, &current_pin);
 
-   mainMenu();
+   mainMenu(db_filename, current_pin);
    return 0;
 }
 
 
 /**/
-void dbSelect(void) {
+void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
+   int selection;
+   printf("\n-----PARTY INVENTORY MANAGER-----\n");
+   printf("[0] New Database\n");
+
+   char *db_filenames[MAX_DATABASES];
+   int db_list_len = list_databases(DB_LIST, db_filenames);
+   int success;
+
+   do {
+
+      int i;
+      for (i = 0; i < db_list_len; i++) {
+         printf("[%d] %s\n", i+1, db_filenames[i]);
+      }
+
+      printf("Select database to operate: ");
+      success = scanf("%d", &selection);
+   } while (success != 1 || selection < 0 || selection > db_list_len);
+   
+   selection--;
+
+   char new_db[MAX_NAME_SIZE];
+   int new_db_pin;
+   
+   /* New Database */
+   if (selection == -1) {
+      printf("Enter new database name: ");
+      scanf("%19s", new_db);
+      success = 0;
+
+      do {
+         printf("Enter new database PIN: ");
+         success = scanf("%d", &new_db_pin);
+         if (success != 1 || new_db_pin < 0 || new_db_pin > 999) printf("Invalid PIN, try again\n");
+      } while (success != 1 || new_db_pin < 0 || new_db_pin > 999);
+
+      add_database(new_db, new_db_pin);
+      strcpy(db_filename, new_db);
+      *current_pin = new_db_pin;
+
+   /* Existing Database */
+   } else {
+      success = 0;
+      int db_pin;
+      strcpy(db_filename, db_filenames[selection]);
+      
+      do {
+         printf("Enter PIN for %s: ", db_filename);
+         success = scanf("%d", &db_pin);
+         if (success != 1 || db_pin < 0 || db_pin > 999) printf("Invalid PIN, try again\n");
+         else {
+            if (attempt_decrypt(db_filename, db_pin)) {
+               read_from_db(db_filename, &productTree);
+               printf("Decryption successful.\n");
+               break;
+            } else {
+               printf("Decryption unsuccessful.\n");
+            }
+         }
+      } while (success != 1 || db_pin < 0 || db_pin > 999);
+      
+   }
    return;
 }
 
@@ -69,7 +137,7 @@ void dbSelect(void) {
  * outputs:
  * - 
 *******************************************************************************/
-void mainMenu(void) {
+void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin) {
    int mainChoice;
 
    do {
@@ -92,8 +160,8 @@ void mainMenu(void) {
          case INVENTORY: 
             inventoryMenu();
             break;
-         case DATABASE: 
-            databaseMenu();
+         case DATABASE:
+            databaseMenu(db_filename, current_pin);
             break;
          default:
             printf("Invalid choice.");
@@ -184,14 +252,13 @@ void inventoryMenu (void) {
 
 
 /**/
-void databaseMenu (void) {   
+void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {   
    int databaseChoice;
 
    do {   
       printf("\n-----DATABASE MENU-----\n"
          "0. exit\n"
          "1. save to database\n"
-         "2. read from database\n"
          "3. encrypt list\n"
          "4. decrypt list\n"
          "5. back\n"
@@ -204,10 +271,7 @@ void databaseMenu (void) {
             exit(0);
             break;
          case SAVE_DB: 
-            saveToDatabase();
-            break;
-         case READ_DB: 
-            readFromDatabase();
+            saveToDatabase(db_filename, current_pin);
             break;
          case DB_BACK:
             break;
@@ -219,6 +283,7 @@ void databaseMenu (void) {
    } while (databaseChoice != 5);
     
 }
+
 
 
 /**/
@@ -341,59 +406,23 @@ void editItem () {
 
 
 /**/
-void saveToDatabase () {
+void saveToDatabase(char* db_filename, int pin) {
    FILE *db_p;
-   db_p = fopen(dbFileName, "w");
+   db_p = fopen(db_filename, "w");
+
+   /* This will later be used to check the validity of user entered PINs */
+   char valid_check[] = "VALID\n";
+   fwrite(valid_check, 1, sizeof(valid_check), db_p);
    
    save_to_database(db_p, productTree.root);
 
    fclose(db_p);
+
+   
+
+   encrypt_db(db_filename, pin);
 }
 
-
-/**/
-void readFromDatabase () {
-   FILE *db_p;
-   product_t read_product;
-   int successful_fields;
-   char product_strings[MAX_DESCRIPTION_SIZE + MAX_NAME_SIZE + 1];
-   char* title;
-   char* description;
-
-    /* memset is required to ensure that the string terminates with \0 
-     * regardless of the size */
-    memset(product_strings, '\0', MAX_NAME_SIZE + MAX_DESCRIPTION_SIZE + 1);
-
-   db_p = fopen(dbFileName, "r");
-   if (db_p == NULL) {
-      printf("Read error");
-      return;
-   }
-
-
-   do {
-      successful_fields = fscanf(db_p, "%d\t%d\t%d\t%d\t%d\t%d\t%lf\t%[^\n]s\n", 
-                                     &read_product.id,
-                                     &read_product.date_added.day,
-                                     &read_product.date_added.month,
-                                     &read_product.date_added.year,
-                                     &read_product.quantity,
-                                     &read_product.category,
-                                     &read_product.price_per_unit,
-                                     product_strings
-                                     );
-
-      if (successful_fields == 8) {
-         title = strtok(product_strings, ";");
-         description = strtok(NULL, ";");
-         strcpy(read_product.title, title);
-         strcpy(read_product.description, description);
-         insert_node(&productTree, product_to_node(read_product, 0));
-      }
-   } while (successful_fields == 8);
-
-
-}
 
 
 /*******************************************************************************

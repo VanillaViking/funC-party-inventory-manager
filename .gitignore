@@ -1,1 +1,3 @@
 build/
+*.pim
+dbs.txt

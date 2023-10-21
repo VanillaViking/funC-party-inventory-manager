@@ -6,8 +6,8 @@ SOURCEDIR = src
 BUILD = build
 EXECUTABLE=party_inventory_manager
 
-all: dir $(BUILD)/main.o $(BUILD)/bstree.o 
-	$(CC) $(CFLAGS) $(BUILD)/main.o $(BUILD)/bstree.o -o $(BUILD)/$(EXECUTABLE)
+all: dir $(BUILD)/main.o $(BUILD)/bstree.o $(BUILD)/database.o
+	$(CC) $(CFLAGS) $(BUILD)/main.o $(BUILD)/bstree.o $(BUILD)/database.o -o $(BUILD)/$(EXECUTABLE)
 	@echo "Build successful. Run ./build/party_inventory_manager"
 
 dir:
@@ -23,4 +23,7 @@ $(BUILD)/main.o: $(SOURCEDIR)/main.c $(SOURCEDIR)/main.h
 
 $(BUILD)/bstree.o: $(SOURCEDIR)/bstree.c $(SOURCEDIR)/bstree.h
 	$(CC) $(CFLAGS) -c $(SOURCEDIR)/bstree.c -o $(BUILD)/bstree.o
+
+$(BUILD)/database.o: $(SOURCEDIR)/database.c $(SOURCEDIR)/database.h
+	$(CC) $(CFLAGS) -c $(SOURCEDIR)/database.c -o $(BUILD)/database.o
 

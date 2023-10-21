@@ -9,6 +9,8 @@
 /*******************************************************************************
  * List preprocessing directives - you may define your own.
 *******************************************************************************/
+#include <stdio.h>
+#define DB_LIST "dbs.txt"
 #define TRUE 1
 #define FALSE 0
 #define MAX_NAME_SIZE 20
@@ -69,22 +71,23 @@ typedef struct {
     double price_per_unit;
 } product_t;
 
+
 /*******************************************************************************
  * Function prototypes - do NOT change the given prototypes. However you may
  * define your own functions if required.
 *******************************************************************************/
-void dbSelect(void);
-void mainMenu(void);
+void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin);
+void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin);
 void productMenu(void);
 void inventoryMenu(void);
-void databaseMenu(void);
+void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin);
 void addProduct();
 void displayInventory();
 void searchInventory();
 void sortInventory();
 void editItem();
-void saveToDatabase();
-void readFromDatabase();
+void saveToDatabase(char* db_filename, int pin);
+void readFromDatabase(char db_filename[MAX_NAME_SIZE], int current_pin);
 void deleteItem();
 
 #endif

@@ -73,7 +73,7 @@ void print_from(const node_t* node) {
 void save_to_database(FILE* db_p, const node_t* node) {
    if (node == NULL) return;
 
-   fprintf(db_p, "%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%lf\n",
+   fprintf(db_p, "%d %s %s %d %d %d %d %d %lf\n",
            node->data.id,
            node->data.title,
            node->data.description,
