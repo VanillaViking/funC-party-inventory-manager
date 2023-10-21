@@ -19,20 +19,38 @@
  * struct definition should have only the fields mentioned in the assignment
  * description.
 *******************************************************************************/
-enum Choice {
+enum mainChoice {
     EXIT,
-    ADD_PRODUCT,
-    DELETE_PRODUCT,
-    DISPLAY_INVENTORY,
-    SEARCH_INVENTORY,
+    PRODUCT,
+    INVENTORY,
+    DATABASE,
+};
+
+enum productChoice {
+    PRODUCT_EXIT,
+    ADD,
+    PRODUCT_BACK,
+};
+
+enum inventoryChoice {
+    INVENTORY_EXIT,
+    DISPLAY,
+    SEARCH,
     SORT,
-    SAVE_TO_DB,
-    READ_FROM_DB,
-    PRINT_MENU,
+    EDIT,
+    INVENTORY_BACK,
+};
+
+enum databaseChoice {
+    DB_EXIT,
+    SAVE_DB,
+    READ_DB,
+    DB_BACK,
 };
 
 enum Category {
-    SPEAKER
+    SPEAKER,
+    MICROPHONE,
 };
 
 typedef struct {
@@ -47,7 +65,7 @@ typedef struct {
     char description[MAX_DESCRIPTION_SIZE];
     date_t date_added;
     int quantity;
-    char category[MAX_CATEGORY_SIZE];
+    int category;
     double price_per_unit;
 } product_t;
 
@@ -55,13 +73,18 @@ typedef struct {
  * Function prototypes - do NOT change the given prototypes. However you may
  * define your own functions if required.
 *******************************************************************************/
-void printMainMenu(void);
+void dbSelect(void);
+void mainMenu(void);
+void productMenu(void);
+void inventoryMenu(void);
+void databaseMenu(void);
 void addProduct();
-int deleteProduct();
 void displayInventory();
 void searchInventory();
 void sortInventory();
+void editItem();
 void saveToDatabase();
-int readFromDatabase();
+void readFromDatabase();
+void deleteItem();
 
 #endif

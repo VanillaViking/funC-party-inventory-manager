@@ -6,8 +6,14 @@ node_t* product_to_node(product_t data, int random_seed) {
    srand(random_seed);
 
    node_t* new_node = malloc(sizeof(node_t));
-   /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
-   new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
+
+   if (data.id != 0) {
+      new_node->key = data.id;
+   } else {
+      /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
+      new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
+      data.id = new_node->key;
+   }
 
    new_node->data = data;
    new_node->parent = NULL;
@@ -60,6 +66,27 @@ void print_from(const node_t* node) {
    print_from(node->left);
    printf("%s %d\n", node->data.title, node->key);
    print_from(node->right);
+}
+
+
+/* uses pre-order traversal to preserve the structure of the tree*/
+void save_to_database(FILE* db_p, const node_t* node) {
+   if (node == NULL) return;
+
+   fprintf(db_p, "%d\t%s\t%s\t%d\t%d\t%d\t%d\t%d\t%lf\n",
+           node->data.id,
+           node->data.title,
+           node->data.description,
+           node->data.date_added.day,
+           node->data.date_added.month,
+           node->data.date_added.year,
+           node->data.quantity,
+           node->data.category,
+           node->data.price_per_unit
+           );
+
+   save_to_database(db_p, node->left);
+   save_to_database(db_p, node->right);
 }
 
 node_t* tree_find(bstree_t* tree, int query_key) {

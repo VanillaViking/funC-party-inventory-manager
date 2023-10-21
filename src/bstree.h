@@ -1,6 +1,7 @@
 #ifndef BST
 #define BST
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "main.h"
 
@@ -28,5 +29,6 @@ node_t* successor(bstree_t* tree, int node_key);
 void erase(bstree_t* tree, int node_key);
 
 void print_from(const node_t* node);
+void save_to_database(FILE* db_p, const node_t* node);
 
 #endif
