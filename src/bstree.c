@@ -1,19 +1,21 @@
 #include "bstree.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 node_t* product_to_node(product_t data, int random_seed) {
    srand(random_seed);
 
    node_t* new_node = malloc(sizeof(node_t));
 
-   if (data.id != 0) {
-      new_node->key = data.id;
-   } else {
+   /* if (data.id != 0) { */
+   /*    new_node->key = data.id; */
+   /* } else { */
       /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
       new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
       data.id = new_node->key;
-   }
+   /* } */
+
 
    new_node->data = data;
    new_node->parent = NULL;
@@ -60,15 +62,6 @@ void insert_node(bstree_t* tree, node_t* new_node) {
 
 }
 
-void print_from(const node_t* node) {
-   if (node == NULL) return;
-
-   print_from(node->left);
-   printf("%s %d\n", node->data.title, node->key);
-   print_from(node->right);
-}
-
-
 /* uses pre-order traversal to preserve the structure of the tree*/
 void save_to_database(FILE* db_p, const node_t* node) {
    if (node == NULL) return;
@@ -88,6 +81,34 @@ void save_to_database(FILE* db_p, const node_t* node) {
    save_to_database(db_p, node->left);
    save_to_database(db_p, node->right);
 }
+
+void print_from(const node_t* node) {
+   if (node == NULL) return;
+   char category_str[50];
+   switch (node->data.category) {
+      case 0:
+         strcpy(category_str, "Speaker");
+      case 1:
+         strcpy(category_str, "Microphone");
+      case 2:
+         strcpy(category_str, "Light");
+      case 3:
+         strcpy(category_str, "Chair");
+      case 4:
+         strcpy(category_str, "Table");
+   }
+
+   print_from(node->left);
+   printf("|%-10d|", node->key);
+   printf("|%-10.10s|", node->data.title);
+   printf("|%-10s|", category_str);
+   printf("|$%-9.2lf|", node->data.price_per_unit);
+   printf("|%-10d|\n", node->data.quantity);
+   print_from(node->right);
+}
+
+
+char category_str[50];
 
 node_t* tree_find(bstree_t* tree, int query_key) {
    node_t* node = tree->root;
