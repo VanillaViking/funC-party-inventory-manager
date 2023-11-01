@@ -193,6 +193,3 @@ void erase(bstree_t* tree, int node_key) {
    tree->size--;
    return;
 }
-
-
-

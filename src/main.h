@@ -30,13 +30,13 @@ enum mainChoice {
 
 enum productChoice {
     PRODUCT_EXIT,
-    ADD,
+    ADD_NEW,
+    ADD_OLD,
     PRODUCT_BACK,
 };
 
 enum inventoryChoice {
     INVENTORY_EXIT,
-    DISPLAY,
     SEARCH,
     SORT,
     EDIT,
@@ -46,13 +46,16 @@ enum inventoryChoice {
 enum databaseChoice {
     DB_EXIT,
     SAVE_DB,
-    READ_DB,
+    SWITCH_DB,
     DB_BACK,
 };
 
 enum Category {
     SPEAKER,
     MICROPHONE,
+    LIGHT,
+    CHAIR,
+    TABLE,
 };
 
 typedef struct {
@@ -81,13 +84,14 @@ void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin);
 void productMenu(void);
 void inventoryMenu(void);
 void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin);
-void addProduct();
+void addNewProduct();
+void addExistingProduct(/* id */);
 void displayInventory();
 void searchInventory();
 void sortInventory();
 void editItem();
 void saveToDatabase(char* db_filename, int pin);
-void readFromDatabase(char db_filename[MAX_NAME_SIZE], int current_pin);
+void switchDatabase(char db_filename[MAX_NAME_SIZE], int current_pin);
 void deleteItem();
 
 #endif
