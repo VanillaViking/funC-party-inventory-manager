@@ -3,19 +3,44 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int randomize_helper(FILE *in)
+{
+    unsigned int  seed;
+
+    if (!in)
+        return -1;
+
+    if (fread(&seed, sizeof seed, 1, in) == 1) {
+        fclose(in);
+        srand(seed);
+        return 0;
+    }
+
+    fclose(in);
+    return -1;
+}
+
+static int randomize(void)
+{
+    if (!randomize_helper(fopen("/dev/urandom", "r")))
+        return 0;
+    if (!randomize_helper(fopen("/dev/arandom", "r")))
+        return 0;
+    if (!randomize_helper(fopen("/dev/random", "r")))
+        return 0;
+
+    /* No randomness sources found. */
+    return -1;
+}
+
 node_t* product_to_node(product_t data, int random_seed) {
-   srand(random_seed);
+   if (randomize() == -1) printf("WARNING: no randomness sources found.\n");
 
    node_t* new_node = malloc(sizeof(node_t));
 
-   /* if (data.id != 0) { */
-   /*    new_node->key = data.id; */
-   /* } else { */
-      /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
-      new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
-      data.id = new_node->key;
-   /* } */
-
+   /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
+   new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
+   data.id = new_node->key;
 
    new_node->data = data;
    new_node->parent = NULL;
@@ -66,47 +91,68 @@ void insert_node(bstree_t* tree, node_t* new_node) {
 void save_to_database(FILE* db_p, const node_t* node) {
    if (node == NULL) return;
 
-   fprintf(db_p, "%d %s %s %d %d %d %d %d %lf\n",
+   fprintf(db_p, "%d %d %d %d %d %d %lf %s;%s\n",
            node->data.id,
-           node->data.title,
-           node->data.description,
            node->data.date_added.day,
            node->data.date_added.month,
            node->data.date_added.year,
            node->data.quantity,
            node->data.category,
-           node->data.price_per_unit
+           node->data.price_per_unit,
+           node->data.title,
+           node->data.description
            );
 
    save_to_database(db_p, node->left);
    save_to_database(db_p, node->right);
 }
 
-void print_from(const node_t* node) {
+void print_node(const node_t* node) {
    if (node == NULL) return;
+
    char category_str[50];
    switch (node->data.category) {
       case 0:
          strcpy(category_str, "Speaker");
+         break;
       case 1:
          strcpy(category_str, "Microphone");
+         break;
       case 2:
          strcpy(category_str, "Light");
+         break;
       case 3:
          strcpy(category_str, "Chair");
+         break;
       case 4:
          strcpy(category_str, "Table");
+         break;
    }
 
-   print_from(node->left);
    printf("|%-10d|", node->key);
    printf("|%-10.10s|", node->data.title);
    printf("|%-10s|", category_str);
    printf("|$%-9.2lf|", node->data.price_per_unit);
    printf("|%-10d|\n", node->data.quantity);
+}
+
+void print_from(const node_t* node) {
+   if (node == NULL) return;
+
+   print_from(node->left);
+   print_node(node);
    print_from(node->right);
 }
 
+void name_search(const node_t* node, char query[MAX_NAME_SIZE]) {
+   if (node == NULL) return;
+   
+   name_search(node->left, query);
+   if (strstr(node->data.title, query) != NULL) {
+      print_node(node);
+   }
+   name_search(node->right, query);
+}
 
 char category_str[50];
 
@@ -124,13 +170,6 @@ node_t* tree_find(bstree_t* tree, int query_key) {
    }
    return node;
 }
-
-/* node_t* tree_min(bstree_t* tree) { */
-/*    if (tree->root == NULL) { */
-/*       return NULL; */
-/*    } */
-/*    return min(tree->root); */
-/* } */
 
 node_t* min(node_t* node) {
    while(node->left != NULL) {

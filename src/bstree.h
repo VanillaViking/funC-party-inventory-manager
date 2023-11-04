@@ -28,6 +28,8 @@ node_t* min(node_t* node);
 node_t* successor(bstree_t* tree, int node_key);
 void erase(bstree_t* tree, int node_key);
 
+void name_search(const node_t* node, char query[MAX_NAME_SIZE]);
+
 void print_from(const node_t* node);
 
 /*TODO: move this into database.h*/

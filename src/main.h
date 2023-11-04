@@ -1,14 +1,6 @@
 #ifndef MAIN
 #define MAIN
 
-/*******************************************************************************
- * List header files - do NOT use any other header files. Note that stdlib.h is
- * included in case you want to use any of the functions in there. However the
- * task can be achieved with stdio.h and string.h only.
-*******************************************************************************/
-/*******************************************************************************
- * List preprocessing directives - you may define your own.
-*******************************************************************************/
 #include <stdio.h>
 #define DB_LIST "dbs.txt"
 #define TRUE 1
@@ -17,9 +9,7 @@
 #define MAX_DESCRIPTION_SIZE 120
 #define MAX_CATEGORY_SIZE 20
 /*******************************************************************************
- * List structs - you may define struct date_time and struct flight only. Each
- * struct definition should have only the fields mentioned in the assignment
- * description.
+ * List structs
 *******************************************************************************/
 enum mainChoice {
     EXIT,
@@ -37,8 +27,9 @@ enum productChoice {
 
 enum inventoryChoice {
     INVENTORY_EXIT,
+    DISPLAY,
     SEARCH,
-    SORT,
+    DELETE,
     EDIT,
     INVENTORY_BACK,
 };
@@ -76,22 +67,21 @@ typedef struct {
 
 
 /*******************************************************************************
- * Function prototypes - do NOT change the given prototypes. However you may
- * define your own functions if required.
+ * Function prototypes 
 *******************************************************************************/
+void quit(char* db_filename, const int current_pin);
 void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin);
 void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin);
-void productMenu(void);
-void inventoryMenu(void);
+void productMenu(char db_filename[MAX_NAME_SIZE], int current_pin);
+void inventoryMenu(char db_filename[MAX_NAME_SIZE], int current_pin);
 void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin);
-void addNewProduct();
+product_t newProduct();
 void addExistingProduct(/* id */);
 void displayInventory();
 void searchInventory();
-void sortInventory();
+void deleteItem();
 void editItem();
 void saveToDatabase(char* db_filename, int pin);
 void switchDatabase(char db_filename[MAX_NAME_SIZE], int current_pin);
-void deleteItem();
 
 #endif

@@ -23,17 +23,28 @@ bstree_t productTree;
 /*******************************************************************************
  * Main
 *******************************************************************************/
-
 int main(void){
    char db_filename[MAX_NAME_SIZE];
    int current_pin;
    
-   /* encrypt_db("database.pim", 343); */
-
    dbSelect(db_filename, &current_pin);
 
    mainMenu(db_filename, current_pin);
    return 0;
+}
+
+void quit(char* db_filename, const int current_pin) {
+   printf("Save changes? [Y/n]");
+   char c[10];
+
+   scanf("%s", c);
+   
+   if (strcmp(c, "y") == 0 || strcmp(c, "Y") == 0 || strcmp(c, "") == 0) {
+      saveToDatabase(db_filename, current_pin);
+   }
+   
+   encrypt_db(db_filename, current_pin);
+   exit(0);
 }
 
 
@@ -104,6 +115,7 @@ void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
             if (attempt_decrypt(db_filename, db_pin)) {
                read_from_db(db_filename, &productTree);
                printf("Decryption successful.\n");
+               *current_pin = db_pin;
                break;
             } else {
                printf("Decryption unsuccessful.\n");
@@ -111,7 +123,7 @@ void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
                /* currently loops until correct PIN is entered - should be an exit option/wrong database */
             }
          }
-      } while (success != 1 || db_pin < 0 || db_pin > 999);  
+      } while (success != 1 || db_pin <= 0 || db_pin > 999);  
    }
    return;
 }
@@ -140,13 +152,13 @@ void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin) {
 
       switch (mainChoice) {
          case EXIT:
-            return;
+            quit(db_filename, current_pin);
             break;
          case PRODUCT: 
-            productMenu();
+            productMenu(db_filename, current_pin);
             break;
          case INVENTORY: 
-            inventoryMenu();
+            inventoryMenu(db_filename, current_pin);
             break;
          case DATABASE:
             databaseMenu(db_filename, current_pin);
@@ -160,7 +172,7 @@ void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin) {
 
 
 /* submenu for product choices */
-void productMenu (void) {
+void productMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
    int productChoice;
 
    do {
@@ -179,10 +191,10 @@ void productMenu (void) {
 
       switch (productChoice) {
          case EXIT:
-            exit(0);
+            quit(db_filename, current_pin);
             break;
          case ADD_NEW: 
-            addNewProduct();
+            insert_node(&productTree, product_to_node(newProduct(), 23));
             break;
          case ADD_OLD:
             addExistingProduct();
@@ -198,32 +210,35 @@ void productMenu (void) {
 
 
 /* brings up menu of options relating to the inventory */
-void inventoryMenu (void) {
+void inventoryMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
    int inventoryChoice;
+   displayInventory();
+
 
    do {   
-      displayInventory();
-
       printf("\n-----INVENTORY MENU-----\n"
-         "0. back\n"
-         "1. search inventory\n"
-         "2. sort inventory\n"
-         "3. edit item\n"
-         "4. back\n"
+         "0. quit\n"
+         "1. display inventory\n" 
+         "2. search inventory\n"
+         "3. delete item\n"
+         "4. edit item\n"
+         "5. back\n"
          "Enter your choice>\n");
 
       scanf("%d", &inventoryChoice);
       
       switch (inventoryChoice) {
          case EXIT:
-            exit(0);
+            quit(db_filename, current_pin);
+            break;
+         case DISPLAY:
+            displayInventory();
             break;
          case SEARCH: 
-            searchInventory();/*
-            displayInventory();*/
+            searchInventory();
             break;
-         case SORT:
-            sortInventory();/*
+         case DELETE:
+            deleteItem();/*
             displayInventory();*/
             break;
          case EDIT:
@@ -256,7 +271,7 @@ void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
       
       switch (databaseChoice) {
          case EXIT:
-            exit(0);
+            quit(db_filename, current_pin);
             break;
          case SAVE_DB: 
             saveToDatabase(db_filename, current_pin);
@@ -275,7 +290,7 @@ void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
 
 
 /* create a new product and add to the inventory list */
-void addNewProduct () {
+product_t newProduct () {
    product_t newproduct;
    
    printf("Enter product name>\n");
@@ -372,7 +387,7 @@ void addNewProduct () {
    */
    /*printf("", id)*/
    
-   insert_node(&productTree, product_to_node(newproduct, 23));
+   return newproduct;
 } 
 
 
@@ -399,19 +414,44 @@ void displayInventory () {
 
 /* enables user to search for specific item within inventory list */
 void searchInventory () {
+   char query[MAX_NAME_SIZE]; 
+
+   printf("Enter product name>\n");
+   scanf("%s", query);
+
+   printf("\nSEARCH RESULTS\n");
+   name_search(productTree.root, query);
    
 }
 
 
 /* enables user to sort and view inventory by either name, price or category */
-void sortInventory () {
-   
+void deleteItem() {
+   int id;
+   printf("Enter product ID>\n");
+   scanf("%d", &id);
+
+
+   erase(&productTree, id);
 }
 
 
 /* make changes to pre existing item within inventory */
 void editItem () {
-   
+   int id;
+   printf("Enter product ID>\n");
+   scanf("%d", &id);
+
+   node_t* node = tree_find(&productTree, id);
+   if (node == NULL) {
+      printf("Item not found\n");
+      return;
+   }
+
+   product_t edited_product = newProduct();
+   edited_product.id = id;
+
+   node->data = edited_product;
 }
 
 
@@ -421,14 +461,12 @@ void saveToDatabase(char* db_filename, int pin) {
    db_p = fopen(db_filename, "w");
 
    /* This will later be used to check the validity of user entered PINs */
-   char valid_check[] = "VALID\n";
-   fwrite(valid_check, 1, sizeof(valid_check), db_p);
+   fprintf(db_p, "VALID\n");
    
    save_to_database(db_p, productTree.root);
 
    fclose(db_p);
 
-   encrypt_db(db_filename, pin);
 
    /*if (save_to_database == TRUE) {
       printf("Saved to database.\n");

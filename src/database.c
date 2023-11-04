@@ -14,11 +14,27 @@ char* strdup(const char* str) {
     return new_str;
 }
 
+int file_exists(const char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    int is_exist = FALSE;
+    if (fp != NULL)
+    {
+        is_exist = TRUE;
+        fclose(fp); 
+    }
+    return is_exist;
+}
+
 
 int list_databases(const char *filename, char *db_filenames[MAX_DATABASES]) {
+   if (!file_exists(filename)) {
+      /* create the file if it does not exist */
+      FILE *temp = fopen(filename, "a");
+      fclose(temp);
+   }
     FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Error opening the file");
+    if (file == NULL) { 
         return -1;
     }
 
@@ -46,11 +62,17 @@ void add_database(char* filename, int new_db_pin) {
    FILE *db_p = fopen(filename, "w");
    
    /* This will later be used to check the validity of user entered PINs */
-   char valid_check[] = "VALID\n";
-   fwrite(valid_check, 1, sizeof(valid_check), db_p);
+   char valid_check[] = "VALID";
+   fprintf(db_p, "%s\n", valid_check);
    fclose(db_p);
 
-   encrypt_db(filename, new_db_pin);
+   /* encrypt_db(filename, new_db_pin); */
+
+   FILE *db_list = fopen(DB_LIST, "a");
+   /* fwrite("\n", 1, 1, db_list); */
+   fprintf(db_list, "%s\n", filename);
+
+   fclose(db_list);
 }
 
 
@@ -97,7 +119,6 @@ void decrypt_db(char* filename, int pin) {
 
    remove(filename);
    rename("temp", filename);
-
 }
 
 int attempt_decrypt(char* filename, int pin) {
@@ -130,7 +151,6 @@ void read_from_db(char db_filename[MAX_NAME_SIZE], bstree_t* productTree) {
    int successful_fields;
    char product_strings[MAX_DESCRIPTION_SIZE + MAX_NAME_SIZE + 1];
    char* title;
-   char* description;
 
     /* memset is required to ensure that the string terminates with \0 
      * regardless of the size */
@@ -142,12 +162,12 @@ void read_from_db(char db_filename[MAX_NAME_SIZE], bstree_t* productTree) {
       return;
    }
 
-   char valid_check[5];
+   char valid_check[6];
    /* get rid of PIN validation line*/
    fscanf(db_p, "%5s\n", valid_check);
 
    do {
-      successful_fields = fscanf(db_p, "%d\t%d\t%d\t%d\t%d\t%d\t%lf\t%[^\n]s\n", 
+      successful_fields = fscanf(db_p, "%d %d %d %d %d %d %lf %[^\n]s\n", 
                                      &read_product.id,
                                      &read_product.date_added.day,
                                      &read_product.date_added.month,
@@ -160,9 +180,9 @@ void read_from_db(char db_filename[MAX_NAME_SIZE], bstree_t* productTree) {
 
       if (successful_fields == 8) {
          title = strtok(product_strings, ";");
-         description = strtok(NULL, ";");
+         /* description = strtok(NULL, ";"); */
          strcpy(read_product.title, title);
-         strcpy(read_product.description, description);
+         /* strcpy(read_product.description, description); */
          insert_node(productTree, product_to_node(read_product, 0));
       }
    } while (successful_fields == 8);
