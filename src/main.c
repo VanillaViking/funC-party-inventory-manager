@@ -14,6 +14,8 @@
 #include "database.h"
 #include "main.h"
 
+#define DEBUG
+
 
 /*******************************************************************************
  * Global Application State
@@ -34,6 +36,13 @@ int main(void){
 }
 
 
+/*******************************************************************************
+ * Prompt the user to save the database
+ * 
+ * inputs:
+ * - db_filename: the filename of the current database
+ * outputs:
+*******************************************************************************/
 void promptSave(char* db_filename) {
    printf("Save changes? [Y/n]");
    char c[10];
@@ -45,6 +54,14 @@ void promptSave(char* db_filename) {
    }
 }
 
+/*******************************************************************************
+ * Exit the program
+ * 
+ * inputs:
+ * - db_filename: the filename of the current database
+ * - current_pin: the pin for the database
+ * outputs:
+*******************************************************************************/
 void quit(char* db_filename, const int current_pin) {
 
    promptSave(db_filename);
@@ -54,7 +71,16 @@ void quit(char* db_filename, const int current_pin) {
 }
 
 
+/*******************************************************************************
+ * Prompt to select the database
+ * 
+ * inputs:
+ * - db_filename: the filename of the current database
+ * - current_pin: the pin for the database
+ * outputs:
+*******************************************************************************/
 void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
+
    int selection;
    printf("\n-----PARTY INVENTORY MANAGER-----\n");
    printf("[0] New Database\n");
@@ -73,6 +99,10 @@ void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
       printf("Select database to operate: ");
       success = scanf("%d", &selection);
    } while (success != 1 || selection < 0 || selection > db_list_len);
+
+   #ifdef DEBUG
+   printf("DEBUG: Selection: %d\n", selection);
+   #endif
       
    selection--;
 
@@ -185,7 +215,6 @@ void productMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
       printf("\n-----PRODUCT MENU-----\n"
          "0. exit\n"
          "1. add new product\n"
-         "2. add existing product\n"
          "3. back\n"
          "Enter your choice>\n");
 
@@ -200,10 +229,7 @@ void productMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
             quit(db_filename, current_pin);
             break;
          case ADD_NEW: 
-            insert_node(&productTree, product_to_node(newProduct(), 23));
-            break;
-         case ADD_OLD:
-            addExistingProduct();
+            insert_node(&productTree, product_to_node(newProduct()));
             break;
          case PRODUCT_BACK:
             break;
@@ -211,7 +237,7 @@ void productMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
             printf("Invalid choice.");
             break;
       }
-   } while (productChoice != 3);
+   } while (productChoice != PRODUCT_BACK);
 }
 
 
@@ -303,7 +329,13 @@ void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
 }
 
 
-/* create a new product and add to the inventory list */
+
+/*******************************************************************************
+ * Create a new product from user input
+ * 
+ * inputs:
+ * outputs:
+*******************************************************************************/
 product_t newProduct () {
    
    int c;
@@ -398,27 +430,21 @@ product_t newProduct () {
       }
    } while (validQuant == FALSE);
 
-   /* 
-      id is auto generated 
-      current id repeats the same for each item - "...02"
-   */
-   /*printf("", id)*/
-   
+   #ifdef DEBUG
+   printf("DEBUG: new product %d %d %d %d %d %lf %s;%s\n", 
+           newproduct.date_added.day,
+           newproduct.date_added.month,
+           newproduct.date_added.year,
+           newproduct.quantity,
+           newproduct.category,
+           newproduct.price_per_unit,
+           newproduct.title,
+           newproduct.description
+          );
+   #endif
+
    return newproduct;
 } 
-
-
-/* updates an existing product with an additional quantity */
-void addExistingProduct() {
-   /*int idscan;*/
-   printf("Enter ID>\n");
-   /*scanf("%d", &idscan);
-   goto id ... */
-      
-   printf("Enter added quantity>\n");
-   /*scanf("%d", &newquantity);
-   quantity =+ newquantity*/
-}
 
 
 /* displays current inventory list: automatic upon inventoryMenu call */
@@ -472,7 +498,14 @@ void editItem () {
 }
 
 
-/* encrypts and saves current inventory to chosen database */
+
+/*******************************************************************************
+ * encrypts and saves current inventory to chosen database 
+ * 
+ * inputs: 
+ * - db_filename: name of the database
+ * outputs:
+*******************************************************************************/
 void saveToDatabase(char* db_filename) {
    FILE *db_p;
    db_p = fopen(db_filename, "w");
@@ -486,7 +519,14 @@ void saveToDatabase(char* db_filename) {
 }
 
 
-/* decrypts and prints selected database to inventory */
+/*******************************************************************************
+ * decrypts and prints selected database to inventory 
+ * 
+ * inputs: 
+ * - db_filename: name of the database
+ * - current_pin: PIN for the current databaase
+ * outputs:
+*******************************************************************************/
 void switchDatabase(char db_filename[MAX_NAME_SIZE], int* current_pin) {
    promptSave(db_filename);
    
@@ -497,15 +537,3 @@ void switchDatabase(char db_filename[MAX_NAME_SIZE], int* current_pin) {
    dbSelect(db_filename, current_pin);
    
 }
-
-
-/*******************************************************************************
- * This function prompts the user to enter information about the employee to 
- * add, and then pushes the new employee to employeelist
- * 
- * inputs:
- * - employeelist: the list of employees
- * - employee_len: number of employees in the list
- * outputs:
- * - none
-*******************************************************************************/

@@ -1,8 +1,19 @@
 #include "bstree.h"
+#include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+/*******************************************************************************
+ * provide a secure random integer from the given file. 
+ * 
+ * 
+ * inputs:
+ * - filename: The database filename
+ * - productTree: The main binary search tree structure
+ * outputs:
+ * - int: randomly genereated integer 
+*******************************************************************************/
 static int randomize_helper(FILE *in)
 {
     unsigned int  seed;
@@ -20,6 +31,16 @@ static int randomize_helper(FILE *in)
     return -1;
 }
 
+/*******************************************************************************
+ * provide a secure random integer from the given file. 
+ * 
+ * 
+ * inputs:
+ * - filename: The database filename
+ * - productTree: The main binary search tree structure
+ * outputs:
+ * - int: randomly genereated integer 
+*******************************************************************************/
 static int randomize(void)
 {
     if (!randomize_helper(fopen("/dev/urandom", "r")))
@@ -33,7 +54,17 @@ static int randomize(void)
     return -1;
 }
 
-node_t* product_to_node(product_t data, int random_seed) {
+/*******************************************************************************
+ * Converts a product to a binary search tree node
+ * 
+ * 
+ * inputs:
+ * - product_t: The product type to be converted to a node
+ * - productTree: The main binary search tree structure
+ * outputs:
+ * - int: randomly genereated integer 
+*******************************************************************************/
+node_t* product_to_node(product_t data) {
    if (randomize() == -1) printf("WARNING: no randomness sources found.\n");
 
    node_t* new_node = malloc(sizeof(node_t));
@@ -41,6 +72,10 @@ node_t* product_to_node(product_t data, int random_seed) {
    /* the tree key is the date along with a random number. This is so that there is less chance of duplicate keys*/
    new_node->key = (data.date_added.year * 1000000) + (data.date_added.month * 10000) + (data.date_added.day * 100) + (rand() % 100);
    data.id = new_node->key;
+
+   #ifdef DEBUG
+   printf("DEBUG: New node key: %d\n", new_node->key);
+   #endif
 
    new_node->data = data;
    new_node->parent = NULL;
@@ -51,12 +86,25 @@ node_t* product_to_node(product_t data, int random_seed) {
 }
 
 
+/*******************************************************************************
+ * Inserts a new node into the tree
+ * 
+ * 
+ * inputs:
+ * - bstree_t: The main product tree of the app
+ * - node_t: The node to be added into the trere
+ * outputs:
+ * - 
+*******************************************************************************/
 void insert_node(bstree_t* tree, node_t* new_node) {
    node_t* node = tree->root;
    node_t* parent_node = tree->root;
    int went_right;
 
    if (node == NULL) {
+#ifdef DEBUG
+      printf("DEBUG: Root is null. Creating new root.\n");
+#endif
       tree->root = new_node;
       tree->size++;
       return;
@@ -86,9 +134,32 @@ void insert_node(bstree_t* tree, node_t* new_node) {
 
 }
 
-/* uses pre-order traversal to preserve the structure of the tree*/
+/*******************************************************************************
+ * Saves the entire product tree to the database file
+ * uses pre-order traversal to preserve the structure of the tree
+ * 
+ * inputs:
+ * - db_p: The pointer to the file stream of the database
+ * - node: the root node
+ * outputs:
+ * - 
+*******************************************************************************/
 void save_to_database(FILE* db_p, const node_t* node) {
    if (node == NULL) return;
+
+   #ifdef DEBUG
+   printf("DEBUG: SAVING %d %d %d %d %d %d %lf %s;%s\n", 
+           node->data.id,
+           node->data.date_added.day,
+           node->data.date_added.month,
+           node->data.date_added.year,
+           node->data.quantity,
+           node->data.category,
+           node->data.price_per_unit,
+           node->data.title,
+           node->data.description
+          );
+   #endif
 
    fprintf(db_p, "%d %d %d %d %d %d %lf %s;%s\n",
            node->data.id,
@@ -106,6 +177,15 @@ void save_to_database(FILE* db_p, const node_t* node) {
    save_to_database(db_p, node->right);
 }
 
+/*******************************************************************************
+ * Prints a single node
+ * 
+ * 
+ * inputs:
+ * - node: The node to print
+ * outputs:
+ * - 
+*******************************************************************************/
 void print_node(const node_t* node) {
    if (node == NULL) return;
 
@@ -135,6 +215,16 @@ void print_node(const node_t* node) {
    printf("|%-10d|\n", node->data.quantity);
 }
 
+
+/*******************************************************************************
+ * Print all the sub-nodes from the given node
+ * 
+ * 
+ * inputs:
+ * - node: The node to start from
+ * outputs:
+ * - 
+*******************************************************************************/
 void print_from(const node_t* node) {
    if (node == NULL) return;
 
@@ -143,6 +233,15 @@ void print_from(const node_t* node) {
    print_from(node->right);
 }
 
+/*******************************************************************************
+ * Searches the entire tree for the matching names
+ * 
+ * 
+ * inputs:
+ * - node: The node to start from
+ * outputs:
+ * - 
+*******************************************************************************/
 void name_search(const node_t* node, char query[MAX_NAME_SIZE]) {
    if (node == NULL) return;
    
@@ -155,6 +254,16 @@ void name_search(const node_t* node, char query[MAX_NAME_SIZE]) {
 
 char category_str[50];
 
+/*******************************************************************************
+ * Find the given key in the tree
+ * 
+ * 
+ * inputs:
+ * - tree: The main product tree to search in
+ * - query_key: The key to search for
+ * outputs:
+ * - node_t found node or NULL if not found 
+*******************************************************************************/
 node_t* tree_find(bstree_t* tree, int query_key) {
    node_t* node = tree->root;
 
@@ -170,6 +279,14 @@ node_t* tree_find(bstree_t* tree, int query_key) {
    return node;
 }
 
+/*******************************************************************************
+ * Find the minimum key in the tree
+ * 
+ * inputs:
+ * - node: the root of the tree
+ * outputs:
+ * - node_t found node or NULL if not found
+*******************************************************************************/
 node_t* min(node_t* node) {
    while(node->left != NULL) {
       node = node->left;
@@ -177,6 +294,15 @@ node_t* min(node_t* node) {
    return node;
 }
 
+/*******************************************************************************
+ * Find the successor of the given node key
+ * 
+ * inputs:
+ * - tree: the main product tree
+ * - node_key: the key to find the successor for
+ * outputs:
+ * - node_t found node or NULL if not found
+*******************************************************************************/
 node_t* successor(bstree_t* tree, int node_key) {
    node_t* node = tree_find(tree, node_key);
    
@@ -192,6 +318,14 @@ node_t* successor(bstree_t* tree, int node_key) {
    return NULL;
 }
 
+/*******************************************************************************
+ * Delete the given node from tree
+ * 
+ * inputs:
+ * - tree: the main product tree
+ * - node_key: the key to delete
+ * outputs:
+*******************************************************************************/
 void erase(bstree_t* tree, int node_key) {
    node_t* node_to_remove = tree_find(tree, node_key);
    if (node_to_remove->key != node_key) return;

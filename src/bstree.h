@@ -20,7 +20,7 @@ typedef struct {
 } bstree_t;
 
 
-node_t* product_to_node(product_t data, int random_seed);
+node_t* product_to_node(product_t data);
 void insert_node(bstree_t* tree, node_t* new_node);
 node_t* tree_find(bstree_t* tree, int node_key);
 node_t* min(node_t* node);
