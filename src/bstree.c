@@ -52,7 +52,6 @@ node_t* product_to_node(product_t data, int random_seed) {
 
 
 void insert_node(bstree_t* tree, node_t* new_node) {
-
    node_t* node = tree->root;
    node_t* parent_node = tree->root;
    int went_right;

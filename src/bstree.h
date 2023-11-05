@@ -23,7 +23,6 @@ typedef struct {
 node_t* product_to_node(product_t data, int random_seed);
 void insert_node(bstree_t* tree, node_t* new_node);
 node_t* tree_find(bstree_t* tree, int node_key);
-/* node_t* tree_min(bstree_t* tree); */
 node_t* min(node_t* node);
 node_t* successor(bstree_t* tree, int node_key);
 void erase(bstree_t* tree, int node_key);
@@ -32,7 +31,6 @@ void name_search(const node_t* node, char query[MAX_NAME_SIZE]);
 
 void print_from(const node_t* node);
 
-/*TODO: move this into database.h*/
 void save_to_database(FILE* db_p, const node_t* node);
 
 #endif

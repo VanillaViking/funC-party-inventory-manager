@@ -81,7 +81,7 @@ void displayInventory();
 void searchInventory();
 void deleteItem();
 void editItem();
-void saveToDatabase(char* db_filename, int pin);
-void switchDatabase(char db_filename[MAX_NAME_SIZE], int current_pin);
+void saveToDatabase(char* db_filename);
+void switchDatabase(char db_filename[MAX_NAME_SIZE], int* current_pin);
 
 #endif

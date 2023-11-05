@@ -33,22 +33,27 @@ int main(void){
    return 0;
 }
 
-void quit(char* db_filename, const int current_pin) {
+
+void promptSave(char* db_filename) {
    printf("Save changes? [Y/n]");
    char c[10];
 
    scanf("%s", c);
    
    if (strcmp(c, "y") == 0 || strcmp(c, "Y") == 0 || strcmp(c, "") == 0) {
-      saveToDatabase(db_filename, current_pin);
+      saveToDatabase(db_filename);
    }
+}
+
+void quit(char* db_filename, const int current_pin) {
+
+   promptSave(db_filename);
    
    encrypt_db(db_filename, current_pin);
    exit(0);
 }
 
 
-/* breaks into infinite loop upon invalid character entry */
 void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
    int selection;
    printf("\n-----PARTY INVENTORY MANAGER-----\n");
@@ -65,9 +70,6 @@ void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
          printf("[%d] %s\n", i+1, db_filenames[i]);
       }
 
-   /* add loop to handle invalid character entry ie letter, =, etc 
-      characters separated by spaces each indepently are read and accepted as following commands 
-         - "0 test 123 1 1" takes you straight to addNewProduct */
       printf("Select database to operate: ");
       success = scanf("%d", &selection);
    } while (success != 1 || selection < 0 || selection > db_list_len);
@@ -138,7 +140,7 @@ void dbSelect(char db_filename[MAX_NAME_SIZE], int* current_pin) {
  * - 
 *******************************************************************************/
 void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin) {
-   int mainChoice;
+   int mainChoice = -1;
 
    do {
       printf("\n-----MAIN MENU-----\n"
@@ -147,8 +149,12 @@ void mainMenu(char db_filename[MAX_NAME_SIZE], int current_pin) {
              "2. inventory menu\n"
              "3. database menu\n"
              "Enter your choice>\n");
-             
-      scanf("%d", &mainChoice);
+      
+      int valid = scanf("%d", &mainChoice);
+      while (valid != 1) {
+         getchar(); 
+         valid = scanf("%d", &mainChoice);
+      }
 
       switch (mainChoice) {
          case EXIT:
@@ -225,7 +231,11 @@ void inventoryMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
          "5. back\n"
          "Enter your choice>\n");
 
-      scanf("%d", &inventoryChoice);
+      int valid = scanf("%d", &inventoryChoice);        
+      while (valid != 1) {
+         getchar(); 
+         valid = scanf("%d", &inventoryChoice);
+      }
       
       switch (inventoryChoice) {
          case EXIT:
@@ -251,7 +261,7 @@ void inventoryMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
             printf("Invalid choice.");
             break;
       }
-   } while (inventoryChoice != 4);
+   } while (inventoryChoice != INVENTORY_BACK);
 }
 
 
@@ -267,17 +277,21 @@ void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
          "3. back\n"
          "Enter your choice>\n");
 
-      scanf("%d", &databaseChoice);
+      int valid = scanf("%d", &databaseChoice);
+      while (valid != 1) {
+         getchar(); 
+         valid = scanf("%d", &databaseChoice);
+      }
       
       switch (databaseChoice) {
          case EXIT:
             quit(db_filename, current_pin);
             break;
          case SAVE_DB: 
-            saveToDatabase(db_filename, current_pin);
+            saveToDatabase(db_filename);
             break;
          case SWITCH_DB: 
-            switchDatabase(db_filename, current_pin);
+            switchDatabase(db_filename, &current_pin);
             break;
          case DB_BACK:
             break;
@@ -291,10 +305,13 @@ void databaseMenu (char db_filename[MAX_NAME_SIZE], int current_pin) {
 
 /* create a new product and add to the inventory list */
 product_t newProduct () {
-   product_t newproduct;
    
+   int c;
+   while ((c = getchar()) != '\n' && c != EOF);
+
+   product_t newproduct;
    printf("Enter product name>\n");
-   scanf("%s", newproduct.title);
+   scanf("%20[^\n]s", newproduct.title);
 
    printf("Enter date:\n");
    while (TRUE) {
@@ -456,7 +473,7 @@ void editItem () {
 
 
 /* encrypts and saves current inventory to chosen database */
-void saveToDatabase(char* db_filename, int pin) {
+void saveToDatabase(char* db_filename) {
    FILE *db_p;
    db_p = fopen(db_filename, "w");
 
@@ -466,16 +483,18 @@ void saveToDatabase(char* db_filename, int pin) {
    save_to_database(db_p, productTree.root);
 
    fclose(db_p);
-
-
-   /*if (save_to_database == TRUE) {
-      printf("Saved to database.\n");
-   }*/
 }
 
 
 /* decrypts and prints selected database to inventory */
-void switchDatabase(char db_filename[MAX_NAME_SIZE], int current_pin) {
+void switchDatabase(char db_filename[MAX_NAME_SIZE], int* current_pin) {
+   promptSave(db_filename);
+   
+   /* reset tree */
+   productTree.root = NULL;
+   productTree.size = 0;
+
+   dbSelect(db_filename, current_pin);
    
 }
 
